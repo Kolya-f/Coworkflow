@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoworkFlow — Бронювання коворкінгів</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --navy: #1A365D;
+  --navy-l: #2A4A7F;
+  --navy-xl: #3a5fa0;
+  --orange: #ED8936;
+  --orange-d: #DD6B20;
+  --orange-l: rgba(237,137,54,0.12);
+  --green: #38A169;
+  --green-l: rgba(56,161,105,0.12);
+  --red: #E53E3E;
+  --red-l: rgba(229,62,62,0.12);
+  --white: #fff;
+  --g50: #F7FAFC;
+  --g100: #EDF2F7;
+  --g200: #E2E8F0;
+  --g300: #CBD5E0;
+  --g400: #A0AEC0;
+  --g500: #718096;
+  --g700: #4A5568;
+  --g900: #1A202C;
+  --shadow: 0 4px 24px rgba(26,54,93,0.10);
+  --shadow-sm: 0 2px 8px rgba(26,54,93,0.07);
+  --shadow-lg: 0 12px 40px rgba(26,54,93,0.18);
+  --radius: 12px;
+  --ff: 'Manrope', sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+body { font-family: var(--ff); background: var(--g100); color: var(--g900); min-height: 100vh; }
+
+.page { display: none; min-height: 100vh; flex-direction: column; }
+.page.active { display: flex; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.page.active { animation: fadeIn .3s ease; }
+
+/* ── HEADER ── */
+header {
+  background: var(--navy);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 48px;
+  gap: 32px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.2);
+}
+.logo { font-size: 20px; font-weight: 900; color: #fff; letter-spacing: -0.5px; cursor: pointer; transition: opacity .2s; }
+.logo:hover { opacity: .85; }
+.logo span { color: var(--orange); }
+nav { display: flex; gap: 24px; margin-left: auto; align-items: center; }
+nav a { font-size: 13px; color: rgba(255,255,255,0.75); font-weight: 600; text-decoration: none; cursor: pointer; transition: color .2s; padding: 4px 0; border-bottom: 2px solid transparent; }
+nav a:hover, nav a.active { color: #fff; border-bottom-color: var(--orange); }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: none; cursor: pointer; font-family: var(--ff); font-weight: 700; border-radius: 8px; transition: all .2s; }
+.btn-primary { background: var(--orange); color: #fff; padding: 9px 20px; font-size: 13px; }
+.btn-primary:hover { background: var(--orange-d); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(237,137,54,0.4); }
+.btn-ghost { background: transparent; color: #fff; border: 2px solid rgba(255,255,255,0.4); padding: 7px 18px; font-size: 13px; }
+.btn-ghost:hover { border-color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.08); }
+.btn-outline { background: transparent; color: var(--navy); border: 2px solid var(--navy); padding: 7px 18px; font-size: 13px; }
+.btn-outline:hover { background: var(--navy); color: #fff; }
+.btn-lg { height: 52px; padding: 0 32px; font-size: 15px; border-radius: 10px; }
+.btn-full { width: 100%; }
+
+/* ── FOOTER ── */
+footer { background: var(--navy); padding: 28px 48px; display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+footer .logo { font-size: 17px; }
+.footer-links { display: flex; gap: 20px; }
+.footer-links a { font-size: 12px; color: rgba(255,255,255,0.65); text-decoration: none; cursor: pointer; transition: color .2s; }
+.footer-links a:hover { color: rgba(255,255,255,0.9); }
+footer span { font-size: 12px; color: rgba(255,255,255,0.45); }
+
+/* ── BREADCRUMB ── */
+.breadcrumb { background: var(--g50); padding: 12px 48px; border-bottom: 1px solid var(--g200); display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--g500); }
+.breadcrumb span { color: var(--g300); }
+.breadcrumb a { color: var(--g700); cursor: pointer; }
+.breadcrumb a:hover { color: var(--navy); }
+.breadcrumb .current { color: var(--navy); font-weight: 700; }
+
+/* ── BADGE / CHIP ── */
+.badge { background: var(--g100); border-radius: 20px; padding: 3px 10px; font-size: 11px; color: var(--g700); font-weight: 600; }
+.chip-green { background: var(--green-l); color: var(--green); border-radius: 6px; padding: 2px 10px; font-size: 11px; font-weight: 700; }
+.chip-red { background: var(--red-l); color: var(--red); border-radius: 6px; padding: 2px 10px; font-size: 11px; font-weight: 700; }
+.chip-orange { background: var(--orange-l); color: var(--orange-d); border-radius: 6px; padding: 2px 10px; font-size: 11px; font-weight: 700; }
+.stars { color: #F6AD55; }
+
+/* ── FORM CONTROLS ── */
+.form-group { margin-bottom: 18px; }
+label.lbl { font-size: 12px; font-weight: 700; color: var(--g700); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: 0.4px; }
+input[type=text], input[type=email], input[type=tel], input[type=date], input[type=password], select, textarea {
+  width: 100%; border: 2px solid var(--g200); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--g900);
+  font-family: var(--ff); background: #fff; transition: border-color .2s, box-shadow .2s; outline: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(237,137,54,0.15); }
+.input-icon { position: relative; }
+.input-icon .ico { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none; }
+.input-icon input { padding-left: 38px; }
+textarea { resize: vertical; min-height: 90px; }
+.field-error { border-color: var(--red) !important; }
+.err-msg { font-size: 11px; color: var(--red); margin-top: 4px; display: none; }
+.err-msg.show { display: block; }
+
+/* ══════════════════════════════════════════
+   MODAL SYSTEM
+══════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .25s;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: #fff; border-radius: 20px; width: 440px; max-width: 95vw;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.25);
+  transform: translateY(20px) scale(0.97); transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+  overflow: hidden; position: relative;
+}
+.modal-overlay.open .modal { transform: none; }
+.modal-header { background: linear-gradient(135deg, var(--navy), var(--navy-l)); padding: 28px 28px 24px; }
+.modal-header h2 { font-size: 22px; font-weight: 900; color: #fff; margin-bottom: 4px; }
+.modal-header p { font-size: 13px; color: rgba(255,255,255,0.65); }
+.modal-close { position: absolute; top: 16px; right: 18px; background: rgba(255,255,255,0.15); border: none; color: #fff; width: 30px; height: 30px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background .2s; }
+.modal-close:hover { background: rgba(255,255,255,0.3); }
+.modal-body { padding: 28px; }
+.modal-switch { text-align: center; margin-top: 18px; font-size: 13px; color: var(--g500); }
+.modal-switch a { color: var(--orange); font-weight: 700; cursor: pointer; }
+.modal-switch a:hover { text-decoration: underline; }
+.social-divider { display: flex; align-items: center; gap: 12px; margin: 18px 0; }
+.social-divider::before, .social-divider::after { content: ''; flex: 1; height: 1px; background: var(--g200); }
+.social-divider span { font-size: 11px; color: var(--g400); font-weight: 600; }
+.social-btns { display: flex; gap: 10px; }
+.social-btn { flex: 1; height: 42px; border: 2px solid var(--g200); border-radius: 8px; background: #fff; cursor: pointer; font-size: 13px; font-weight: 700; color: var(--g700); font-family: var(--ff); transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.social-btn:hover { border-color: var(--navy); color: var(--navy); }
+
+/* ══════════════════════════════════════════
+   USER AVATAR (header)
+══════════════════════════════════════════ */
+.user-menu-wrap { position: relative; }
+.user-avatar { width: 36px; height: 36px; background: var(--orange); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 13px; cursor: pointer; border: 2px solid rgba(255,255,255,0.3); transition: border-color .2s; }
+.user-avatar:hover { border-color: rgba(255,255,255,0.8); }
+.user-dropdown { position: absolute; top: calc(100% + 10px); right: 0; background: #fff; border-radius: 12px; box-shadow: var(--shadow-lg); border: 1px solid var(--g200); min-width: 200px; overflow: hidden; z-index: 150; display: none; }
+.user-dropdown.open { display: block; animation: fadeIn .2s ease; }
+.ud-head { padding: 14px 16px; background: var(--g50); border-bottom: 1px solid var(--g200); }
+.ud-name { font-size: 14px; font-weight: 800; color: var(--navy); }
+.ud-email { font-size: 11px; color: var(--g500); }
+.ud-item { display: flex; align-items: center; gap: 10px; padding: 11px 16px; font-size: 13px; font-weight: 600; color: var(--g700); cursor: pointer; transition: background .15s; border-bottom: 1px solid var(--g100); }
+.ud-item:last-child { border-bottom: none; }
+.ud-item:hover { background: var(--g50); color: var(--navy); }
+.ud-item.danger { color: var(--red); }
+.ud-item.danger:hover { background: var(--red-l); }
+
+/* ══════════════════════════════════════════
+   PAGE 1 — HOME
+══════════════════════════════════════════ */
+.hero { background: linear-gradient(135deg, var(--navy) 0%, var(--navy-l) 55%, var(--navy-xl) 100%); padding: 72px 48px 60px; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; top: -100px; right: -100px; width: 500px; height: 500px; background: radial-gradient(circle, rgba(237,137,54,0.12) 0%, transparent 70%); pointer-events: none; }
+.hero-title { font-size: 44px; font-weight: 900; color: #fff; line-height: 1.15; max-width: 580px; margin-bottom: 14px; position: relative; z-index: 1; }
+.hero-title em { color: var(--orange); font-style: normal; }
+.hero-sub { font-size: 15px; color: rgba(255,255,255,0.72); margin-bottom: 36px; max-width: 460px; line-height: 1.7; position: relative; z-index: 1; }
+
+.search-box { background: #fff; border-radius: 16px; padding: 22px 26px; display: flex; gap: 14px; align-items: flex-end; box-shadow: 0 12px 40px rgba(0,0,0,0.25); max-width: 900px; position: relative; z-index: 1; }
+.sf { flex: 1; }
+.sf label { font-size: 10px; font-weight: 800; color: var(--g500); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 5px; display: block; }
+.sf input, .sf select { border: 2px solid var(--g200); border-radius: 8px; padding: 10px 12px; font-size: 13px; font-family: var(--ff); color: var(--g700); background: #fff; width: 100%; transition: border-color .2s; }
+.sf input:focus, .sf select:focus { border-color: var(--orange); outline: none; box-shadow: none; }
+.search-btn { background: var(--orange); color: #fff; border: none; border-radius: 10px; padding: 0 28px; height: 46px; font-size: 14px; font-weight: 800; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 8px; flex-shrink: 0; font-family: var(--ff); transition: all .2s; }
+.search-btn:hover { background: var(--orange-d); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(237,137,54,0.45); }
+.hero-stats { display: flex; gap: 36px; margin-top: 28px; position: relative; z-index: 1; }
+.stat strong { display: block; font-size: 24px; font-weight: 900; color: #fff; }
+.stat span { font-size: 12px; color: rgba(255,255,255,0.6); font-weight: 500; }
+
+.container { padding: 36px 48px; }
+.section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
+.section-title { font-size: 22px; font-weight: 900; color: var(--navy); }
+.section-sub { font-size: 13px; color: var(--g500); margin-top: 3px; }
+.cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+.cowork-card { background: #fff; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); border: 1px solid var(--g200); transition: transform .25s, box-shadow .25s; cursor: pointer; }
+.cowork-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+.card-img { height: 170px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.8); }
+.card-body { padding: 16px; }
+.card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+.card-name { font-size: 16px; font-weight: 800; color: var(--navy); }
+.card-addr { font-size: 12px; color: var(--g500); margin-bottom: 10px; }
+.card-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.card-bottom { display: flex; justify-content: space-between; align-items: center; }
+.card-price { font-size: 20px; font-weight: 900; color: var(--navy); }
+.card-price small { font-size: 11px; font-weight: 400; color: var(--g500); }
+.card-rating { font-size: 12px; color: var(--g500); margin-top: 2px; }
+
+.advantages { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--g200); }
+.adv { padding: 32px; text-align: center; border-right: 1px solid var(--g200); }
+.adv:last-child { border-right: none; }
+.adv-icon { font-size: 32px; margin-bottom: 12px; }
+.adv-title { font-size: 14px; font-weight: 800; color: var(--navy); margin-bottom: 5px; }
+.adv-text { font-size: 12px; color: var(--g500); line-height: 1.6; }
+
+/* ══════════════════════════════════════════
+   PAGE 2 — CATALOG
+══════════════════════════════════════════ */
+.search-bar-compact { background: var(--navy); padding: 12px 48px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.sbc-input { background: rgba(255,255,255,0.12); border: 2px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 8px 14px; font-size: 13px; color: rgba(255,255,255,0.9); font-family: var(--ff); font-weight: 500; flex: 1; min-width: 160px; }
+.sbc-input:focus { outline: none; border-color: var(--orange); background: rgba(255,255,255,0.18); }
+.sbc-input::placeholder { color: rgba(255,255,255,0.5); }
+.sbc-select { background: rgba(255,255,255,0.12); border: 2px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 8px 12px; font-size: 13px; color: rgba(255,255,255,0.9); font-family: var(--ff); font-weight: 500; cursor: pointer; }
+.sbc-select:focus { outline: none; border-color: var(--orange); }
+.sbc-select option { background: var(--navy); color: #fff; }
+
+.catalog-layout { display: flex; flex: 1; }
+.filters { width: 280px; flex-shrink: 0; border-right: 1px solid var(--g200); padding: 24px; background: #fff; }
+.filter-title { font-size: 15px; font-weight: 900; color: var(--navy); margin-bottom: 20px; }
+.filter-section { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--g100); }
+.filter-section:last-child { border-bottom: none; }
+.fs-title { font-size: 11px; font-weight: 800; color: var(--navy); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.6px; }
+.price-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+.price-range-inputs { display: flex; gap: 8px; align-items: center; }
+.price-range-inputs input[type=number] { width: 80px; border: 2px solid var(--g200); border-radius: 8px; padding: 6px 10px; font-size: 13px; font-family: var(--ff); font-weight: 700; color: var(--navy); text-align: center; }
+.price-range-inputs span { color: var(--g400); font-weight: 600; }
+
+.cb-item { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; font-size: 13px; color: var(--g700); cursor: pointer; font-weight: 500; user-select: none; }
+.cb-item:hover { color: var(--navy); }
+.cb { width: 17px; height: 17px; border: 2px solid var(--g300); border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; transition: all .15s; }
+.cb.on { background: var(--orange); border-color: var(--orange); color: #fff; }
+
+.catalog-main { flex: 1; padding: 24px 32px; background: var(--g50); }
+.toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.results-count { font-size: 14px; font-weight: 700; color: var(--navy); }
+.results-count span { color: var(--orange); }
+.toolbar-right { display: flex; gap: 10px; align-items: center; }
+.sort-select { border: 2px solid var(--g200); border-radius: 8px; padding: 7px 12px; font-size: 12px; color: var(--g700); background: #fff; font-family: var(--ff); font-weight: 600; cursor: pointer; }
+.view-toggle { display: flex; border: 2px solid var(--g200); border-radius: 8px; overflow: hidden; }
+.vt { padding: 6px 16px; font-size: 12px; font-weight: 700; cursor: pointer; color: var(--g500); transition: all .15s; }
+.vt.on { background: var(--navy); color: #fff; }
+
+.list-card { background: #fff; border-radius: var(--radius); display: flex; height: 168px; overflow: hidden; border: 1px solid var(--g200); box-shadow: var(--shadow-sm); margin-bottom: 14px; transition: transform .25s, box-shadow .25s; cursor: pointer; }
+.list-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.lc-img { width: 200px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; color: rgba(255,255,255,0.7); font-weight: 600; }
+.lc-body { flex: 1; padding: 16px 20px; display: flex; flex-direction: column; justify-content: space-between; }
+.lc-top-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3px; }
+.lc-name { font-size: 16px; font-weight: 900; color: var(--navy); }
+.rating-chip { display: flex; align-items: center; gap: 4px; background: var(--g100); border-radius: 6px; padding: 3px 9px; font-size: 12px; font-weight: 800; color: var(--navy); }
+.lc-addr { font-size: 12px; color: var(--g500); margin-bottom: 8px; }
+.lc-bottom { display: flex; justify-content: space-between; align-items: center; }
+.lc-price { font-size: 22px; font-weight: 900; color: var(--navy); }
+.lc-price small { font-size: 11px; font-weight: 400; color: var(--g500); }
+.lc-price-note { font-size: 11px; color: var(--g500); }
+.lc-actions { display: flex; gap: 10px; align-items: center; }
+#catalog-list .no-results { text-align: center; padding: 60px 20px; color: var(--g400); font-size: 15px; font-weight: 600; }
+.pagination { display: flex; justify-content: center; gap: 6px; margin-top: 24px; }
+.pg { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; cursor: pointer; border: 2px solid var(--g200); color: var(--g700); transition: all .15s; }
+.pg.on { background: var(--navy); color: #fff; border-color: var(--navy); }
+.pg:hover:not(.on) { border-color: var(--navy); color: var(--navy); }
+
+/* ══════════════════════════════════════════
+   PAGE 3 — DETAIL
+══════════════════════════════════════════ */
+.detail-layout { display: flex; gap: 28px; padding: 28px 48px; flex: 1; align-items: flex-start; }
+.detail-main { flex: 1; min-width: 0; }
+.detail-sidebar { width: 300px; flex-shrink: 0; position: sticky; top: 80px; }
+.gallery { display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: 210px 150px; gap: 4px; border-radius: 14px; overflow: hidden; margin-bottom: 24px; }
+.gal-main { grid-row: span 2; display: flex; align-items: center; justify-content: center; font-size: 13px; color: rgba(255,255,255,0.7); font-weight: 600; }
+.gal-sm { display: flex; align-items: center; justify-content: center; font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 600; }
+.detail-title-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.detail-title { font-size: 30px; font-weight: 900; color: var(--navy); margin-bottom: 4px; }
+.detail-addr { font-size: 13px; color: var(--g500); }
+.rating-big { background: var(--navy); border-radius: 10px; padding: 10px 18px; text-align: center; }
+.rating-big .num { font-size: 24px; font-weight: 900; color: #fff; }
+.rating-big .cnt { font-size: 10px; color: rgba(255,255,255,0.65); }
+.fav-btn { background: var(--g100); border: none; border-radius: 8px; padding: 10px 14px; font-size: 22px; cursor: pointer; transition: all .2s; }
+.fav-btn:hover { background: var(--red-l); }
+.tabs { display: flex; border-bottom: 2px solid var(--g200); margin-bottom: 22px; }
+.tab { padding: 10px 22px; font-size: 13px; font-weight: 700; cursor: pointer; color: var(--g500); border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all .2s; }
+.tab.on { color: var(--navy); border-bottom-color: var(--orange); }
+.amenities-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 28px; }
+.amenity { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 10px; border: 2px solid var(--g200); border-radius: 10px; text-align: center; transition: border-color .2s; }
+.amenity:hover { border-color: var(--orange); }
+.amenity-icon { font-size: 24px; }
+.amenity-label { font-size: 10px; font-weight: 700; color: var(--navy); line-height: 1.3; }
+.cal-box { background: var(--g50); border-radius: 12px; padding: 20px; border: 1px solid var(--g200); }
+.cal-nav { display: flex; justify-content: space-between; margin-bottom: 14px; font-size: 13px; font-weight: 800; color: var(--navy); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 36px); gap: 6px; }
+.cal-hd { font-size: 11px; font-weight: 700; color: var(--g400); text-align: center; padding: 4px 0; }
+.cal-d { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; cursor: pointer; transition: all .15s; }
+.cal-free { background: var(--green-l); color: var(--green); }
+.cal-free:hover { background: var(--green); color: #fff; }
+.cal-busy { background: var(--red-l); color: var(--red); cursor: not-allowed; }
+.cal-today { background: var(--navy); color: #fff; }
+.cal-we { background: var(--g100); color: var(--g400); }
+.cal-legend { display: flex; gap: 16px; margin-top: 14px; font-size: 11px; }
+.cal-legend span { display: flex; align-items: center; gap: 5px; }
+.cal-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+.price-card { border: 2px solid var(--orange); border-radius: 14px; padding: 22px; background: rgba(237,137,54,0.03); }
+.pc-from { font-size: 12px; color: var(--g500); margin-bottom: 3px; }
+.pc-price { font-size: 34px; font-weight: 900; color: var(--navy); margin-bottom: 18px; }
+.pc-price small { font-size: 14px; font-weight: 400; color: var(--g500); }
+.price-table { border: 1px solid var(--g200); border-radius: 8px; overflow: hidden; margin-bottom: 18px; }
+.pt-head { background: var(--orange); color: #fff; display: flex; justify-content: space-between; padding: 9px 14px; font-size: 12px; font-weight: 800; }
+.pt-row { display: flex; justify-content: space-between; padding: 9px 14px; font-size: 12px; border-bottom: 1px solid var(--g100); }
+.pt-row:last-child { border-bottom: none; }
+.pt-row.highlight { background: rgba(237,137,54,0.06); }
+.pc-field { margin-bottom: 10px; }
+.pc-field .lbl { font-size: 11px; font-weight: 800; color: var(--g700); margin-bottom: 5px; display: block; text-transform: uppercase; letter-spacing: 0.4px; }
+.pc-select { width: 100%; border: 2px solid var(--g200); border-radius: 8px; padding: 10px 14px; font-size: 13px; font-family: var(--ff); color: var(--g700); background: #fff; cursor: pointer; font-weight: 600; transition: border-color .2s; }
+.pc-select:focus { border-color: var(--orange); outline: none; }
+.pc-row2 { display: flex; gap: 8px; margin-bottom: 10px; }
+.pc-row2 > div { flex: 1; }
+.total-box { background: var(--g50); border-radius: 8px; padding: 12px; margin-bottom: 16px; }
+.total-line { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+.total-line.sum { font-size: 15px; font-weight: 900; color: var(--navy); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--g200); margin-bottom: 0; }
+.free-cancel { font-size: 11px; color: var(--g400); text-align: center; margin-top: 10px; }
+
+/* ══════════════════════════════════════════
+   PAGE 4 — BOOKING FORM
+══════════════════════════════════════════ */
+.progress-bar { background: var(--g50); padding: 16px 48px; border-bottom: 1px solid var(--g200); display: flex; align-items: center; }
+.ps { display: flex; align-items: center; gap: 9px; font-size: 12px; font-weight: 700; }
+.ps-circle { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; }
+.ps.done { color: var(--green); }
+.ps.done .ps-circle { background: var(--green); color: #fff; }
+.ps.active { color: var(--orange); }
+.ps.active .ps-circle { background: var(--orange); color: #fff; }
+.ps.pending { color: var(--g400); }
+.ps.pending .ps-circle { background: var(--g200); color: var(--g500); }
+.ps-line { flex: 1; height: 2px; margin: 0 14px; }
+.ps-line.done { background: var(--green); }
+.ps-line.pending { background: var(--g200); }
+
+.booking-layout { display: flex; gap: 28px; padding: 32px 48px; flex: 1; align-items: flex-start; }
+.booking-form { flex: 1; max-width: 600px; }
+.booking-section-title { font-size: 22px; font-weight: 900; color: var(--navy); margin-bottom: 4px; }
+.booking-section-sub { font-size: 13px; color: var(--g500); margin-bottom: 28px; }
+.form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.agreement-box { display: flex; align-items: flex-start; gap: 10px; padding: 14px; background: var(--g50); border-radius: 8px; border: 1px solid var(--g200); margin-bottom: 24px; }
+.agr-cb { width: 18px; height: 18px; background: var(--orange); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; flex-shrink: 0; margin-top: 1px; cursor: pointer; }
+.agreement-box p { font-size: 12px; color: var(--g700); line-height: 1.7; }
+.agreement-box a { color: var(--orange); font-weight: 700; }
+.form-actions { display: flex; gap: 12px; align-items: center; }
+.booking-sidebar { width: 300px; flex-shrink: 0; }
+.bs-card { border: 2px solid var(--g200); border-radius: 14px; overflow: hidden; }
+.bs-head { background: var(--navy); padding: 16px 18px; }
+.bs-head .sub { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.7); margin-bottom: 2px; }
+.bs-head .name { font-size: 18px; font-weight: 900; color: #fff; }
+.bs-img { height: 100px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: rgba(255,255,255,0.7); font-weight: 600; }
+.bs-rows { padding: 16px 18px; }
+.bs-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--g100); font-size: 13px; }
+.bs-row:last-child { border-bottom: none; }
+.bs-row .k { color: var(--g500); }
+.bs-row .v { font-weight: 700; color: var(--navy); }
+.bs-total { display: flex; justify-content: space-between; font-size: 17px; font-weight: 900; color: var(--navy); padding: 12px 0 0; }
+.bs-total .v { color: var(--orange); }
+.free-cancel-box { background: var(--green-l); border: 1px solid rgba(56,161,105,0.25); border-radius: 10px; padding: 12px 14px; margin-top: 14px; font-size: 12px; color: var(--green); line-height: 1.6; font-weight: 600; }
+
+/* ══════════════════════════════════════════
+   PAGE 5 — CONFIRMATION
+══════════════════════════════════════════ */
+.confirm-layout { flex: 1; display: flex; align-items: flex-start; justify-content: center; gap: 32px; padding: 48px; }
+.confirm-center { max-width: 560px; width: 100%; text-align: center; }
+.success-icon { width: 84px; height: 84px; background: linear-gradient(135deg, var(--green), #48bb78); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 38px; margin: 0 auto 24px; box-shadow: 0 10px 30px rgba(56,161,105,0.35); }
+.confirm-title { font-size: 32px; font-weight: 900; color: var(--navy); margin-bottom: 8px; }
+.confirm-sub { font-size: 14px; color: var(--g500); margin-bottom: 12px; }
+.booking-num { background: var(--g100); border-radius: 10px; padding: 10px 28px; display: inline-block; margin-bottom: 30px; }
+.booking-num .k { font-size: 11px; color: var(--g500); display: block; font-weight: 600; }
+.booking-num .v { font-size: 24px; font-weight: 900; color: var(--navy); letter-spacing: 2px; }
+.confirm-card { background: #fff; border: 2px solid var(--g200); border-radius: 16px; overflow: hidden; margin-bottom: 24px; text-align: left; }
+.cc-head { background: linear-gradient(135deg, var(--navy), var(--navy-l)); padding: 18px 22px; display: flex; justify-content: space-between; align-items: center; }
+.cc-head .n { font-size: 18px; font-weight: 900; color: #fff; }
+.cc-head .a { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+.cc-rating { background: rgba(255,255,255,0.15); border-radius: 8px; padding: 6px 14px; font-size: 20px; font-weight: 900; color: #fff; }
+.cc-rows { padding: 16px 22px; }
+.cc-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--g100); font-size: 13px; }
+.cc-row:last-child { border-bottom: none; }
+.cc-row .k { color: var(--g500); }
+.cc-row .v { font-weight: 800; color: var(--navy); }
+.cc-total { display: flex; justify-content: space-between; font-size: 18px; font-weight: 900; color: var(--navy); padding-top: 14px; }
+.cc-total .v { color: var(--orange); }
+.confirm-actions { display: flex; flex-direction: column; gap: 10px; }
+.confirm-sidebar { width: 270px; flex-shrink: 0; }
+.next-steps { background: var(--g50); border: 1px solid var(--g200); border-radius: 14px; padding: 22px; }
+.ns-title { font-size: 14px; font-weight: 900; color: var(--navy); margin-bottom: 18px; }
+.ns-item { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 16px; }
+.ns-num { width: 28px; height: 28px; background: var(--orange); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 900; flex-shrink: 0; }
+.ns-text { font-size: 12px; color: var(--g700); line-height: 1.6; font-weight: 500; }
+.mini-map { background: var(--g200); border-radius: 12px; height: 130px; margin-top: 14px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+.mini-map-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(100,100,100,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(100,100,100,0.15) 1px, transparent 1px); background-size: 20px 20px; }
+.mini-map-pin { text-align: center; position: relative; z-index: 1; }
+.mini-map-pin .emoji { font-size: 28px; }
+.mini-map-pin .txt { font-size: 11px; color: var(--g700); font-weight: 700; margin-top: 4px; }
+
+/* ══════════════════════════════════════════
+   PAGE 6 — MY CABINET
+══════════════════════════════════════════ */
+.cabinet-layout { display: flex; flex: 1; gap: 0; }
+.cabinet-sidebar { width: 260px; flex-shrink: 0; border-right: 1px solid var(--g200); background: #fff; padding: 28px 0; }
+.cab-user-info { padding: 0 24px 24px; border-bottom: 1px solid var(--g200); margin-bottom: 16px; }
+.cab-avatar { width: 60px; height: 60px; background: linear-gradient(135deg, var(--orange), var(--orange-d)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 22px; margin-bottom: 12px; }
+.cab-name { font-size: 16px; font-weight: 900; color: var(--navy); }
+.cab-email { font-size: 12px; color: var(--g500); }
+.cab-nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 24px; font-size: 13px; font-weight: 700; color: var(--g700); cursor: pointer; transition: all .15s; border-left: 3px solid transparent; }
+.cab-nav-item:hover { background: var(--g50); color: var(--navy); }
+.cab-nav-item.active { background: var(--orange-l); color: var(--orange-d); border-left-color: var(--orange); }
+.cab-nav-item .ico { font-size: 18px; width: 24px; text-align: center; }
+.cabinet-main { flex: 1; padding: 32px; background: var(--g50); }
+.cab-section { display: none; }
+.cab-section.active { display: block; animation: fadeIn .25s ease; }
+.cab-title { font-size: 22px; font-weight: 900; color: var(--navy); margin-bottom: 20px; }
+.booking-history-card { background: #fff; border: 1px solid var(--g200); border-radius: 12px; padding: 18px 22px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.bhc-left .place { font-size: 16px; font-weight: 800; color: var(--navy); }
+.bhc-left .meta { font-size: 12px; color: var(--g500); margin-top: 3px; }
+.bhc-right { text-align: right; }
+.bhc-price { font-size: 18px; font-weight: 900; color: var(--navy); }
+.profile-form { background: #fff; border: 1px solid var(--g200); border-radius: 12px; padding: 28px; max-width: 540px; }
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+.stat-card { background: #fff; border: 1px solid var(--g200); border-radius: 12px; padding: 20px; text-align: center; }
+.stat-card .num { font-size: 32px; font-weight: 900; color: var(--navy); }
+.stat-card .label { font-size: 12px; color: var(--g500); font-weight: 600; margin-top: 3px; }
+
+/* ── NOTIFICATION ── */
+.toast { position: fixed; bottom: 32px; right: 32px; background: var(--navy); color: #fff; padding: 14px 22px; border-radius: 12px; font-size: 13px; font-weight: 600; box-shadow: var(--shadow-lg); z-index: 999; transform: translateY(80px); opacity: 0; transition: all .35s cubic-bezier(.34,1.56,.64,1); max-width: 320px; }
+.toast.show { transform: none; opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- ════════ MODAL: LOGIN ════════ -->
+<div class="modal-overlay" id="modal-login">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Вхід в акаунт</h2>
+      <p>Раді тебе бачити знову!</p>
+    </div>
+    <button class="modal-close" onclick="closeModal('modal-login')">✕</button>
+    <div class="modal-body">
+      <div class="social-btns">
+        <button class="social-btn" onclick="socialLogin('Google')">🔵 Google</button>
+        <button class="social-btn" onclick="socialLogin('Apple')">🍎 Apple</button>
+      </div>
+      <div class="social-divider"><span>або</span></div>
+      <div class="form-group">
+        <label class="lbl">Email</label>
+        <div class="input-icon">
+          <span class="ico">📧</span>
+          <input type="email" id="login-email" placeholder="your@email.com" />
+        </div>
+        <div class="err-msg" id="login-email-err">Введіть коректний email</div>
+      </div>
+      <div class="form-group">
+        <label class="lbl">Пароль</label>
+        <div class="input-icon">
+          <span class="ico">🔒</span>
+          <input type="password" id="login-pass" placeholder="Ваш пароль" />
+        </div>
+        <div class="err-msg" id="login-pass-err">Невірний пароль</div>
+      </div>
+      <button class="btn btn-primary btn-full" style="height:48px;font-size:14px;border-radius:10px" onclick="doLogin()">Увійти</button>
+      <div class="modal-switch">
+        Немає акаунту? <a onclick="switchModal('modal-login','modal-register')">Зареєструватись</a>
+        &nbsp;·&nbsp; <a style="color:var(--g500)">Забув пароль?</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ MODAL: REGISTER ════════ -->
+<div class="modal-overlay" id="modal-register">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Реєстрація</h2>
+      <p>Приєднуйся до CoworkFlow — безкоштовно!</p>
+    </div>
+    <button class="modal-close" onclick="closeModal('modal-register')">✕</button>
+    <div class="modal-body">
+      <div class="social-btns">
+        <button class="social-btn" onclick="socialLogin('Google')">🔵 Google</button>
+        <button class="social-btn" onclick="socialLogin('Apple')">🍎 Apple</button>
+      </div>
+      <div class="social-divider"><span>або</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="lbl">Ім'я</label>
+          <input type="text" id="reg-fname" placeholder="Олег" />
+          <div class="err-msg" id="reg-fname-err">Введіть ім'я</div>
+        </div>
+        <div class="form-group">
+          <label class="lbl">Прізвище</label>
+          <input type="text" id="reg-lname" placeholder="Ткаченко" />
+          <div class="err-msg" id="reg-lname-err">Введіть прізвище</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="lbl">Email</label>
+        <div class="input-icon">
+          <span class="ico">📧</span>
+          <input type="email" id="reg-email" placeholder="your@email.com" />
+        </div>
+        <div class="err-msg" id="reg-email-err">Введіть коректний email</div>
+      </div>
+      <div class="form-group">
+        <label class="lbl">Пароль</label>
+        <div class="input-icon">
+          <span class="ico">🔒</span>
+          <input type="password" id="reg-pass" placeholder="Мінімум 6 символів" />
+        </div>
+        <div class="err-msg" id="reg-pass-err">Мінімум 6 символів</div>
+      </div>
+      <button class="btn btn-primary btn-full" style="height:48px;font-size:14px;border-radius:10px" onclick="doRegister()">Створити акаунт</button>
+      <div class="modal-switch">
+        Вже є акаунт? <a onclick="switchModal('modal-register','modal-login')">Увійти</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE 1 — HOME
+════════════════════════════════════════ -->
+<div class="page active" id="p-home">
+  <header>
+    <div class="logo" onclick="go('p-home')">Cowork<span>Flow</span></div>
+    <nav>
+      <a class="active" onclick="go('p-home')">Коворкінги</a>
+      <a onclick="go('p-catalog')">Каталог</a>
+      <a>Про нас</a>
+      <div id="hdr-auth-home"></div>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <div class="hero-title">Знайди ідеальний<br>коворкінг у <em>твоєму</em> місті</div>
+    <div class="hero-sub">50+ перевірених коворкінгів. Бронюй онлайн за 2 хвилини — без дзвінків та черг.</div>
+    <div class="search-box">
+      <div class="sf" style="flex:2">
+        <label>📍 Локація або назва</label>
+        <input type="text" id="s-loc" placeholder="Наприклад: WorkHub, Хрещатик, Центр..." />
+      </div>
+      <div class="sf">
+        <label>📅 Дата</label>
+        <input type="date" id="s-date" />
+      </div>
+      <div class="sf">
+        <label>🕐 Час</label>
+        <select id="s-time">
+          <option>09:00</option><option selected>10:00</option><option>11:00</option><option>12:00</option><option>13:00</option><option>14:00</option>
+        </select>
+      </div>
+      <div class="sf">
+        <label>⏱ Тривалість</label>
+        <select id="s-dur">
+          <option>1 година</option><option>2 години</option><option>3 години</option><option selected>4 години</option><option>8 годин</option>
+        </select>
+      </div>
+      <button class="search-btn" onclick="doHomeSearch()">🔍 Знайти</button>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><strong>50+</strong><span>Коворкінгів</span></div>
+      <div class="stat"><strong>1 200+</strong><span>Бронювань</span></div>
+      <div class="stat"><strong>4.8 ⭐</strong><span>Рейтинг</span></div>
+      <div class="stat"><strong>2 хв</strong><span>На бронювання</span></div>
+    </div>
+  </div>
+
+  <div class="container" style="background:var(--g50); flex:1;">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Популярні коворкінги</div>
+        <div class="section-sub">Найбільш вподобані місця серед наших користувачів</div>
+      </div>
+      <button class="btn btn-outline" onclick="go('p-catalog')">Переглянути всі →</button>
+    </div>
+    <div class="cards-grid" id="home-cards"></div>
+
+    <div class="advantages" style="margin-top:40px; border-radius:var(--radius); overflow:hidden; background:#fff; border:1px solid var(--g200);">
+      <div class="adv"><div class="adv-icon">⚡</div><div class="adv-title">Бронюй за 2 хвилини</div><div class="adv-text">Без дзвінків та реєстрацій на папері</div></div>
+      <div class="adv"><div class="adv-icon">📅</div><div class="adv-title">Гнучкий розклад</div><div class="adv-text">Обирай будь-який час і тривалість</div></div>
+      <div class="adv"><div class="adv-icon">🗺️</div><div class="adv-title">50+ локацій</div><div class="adv-text">По всьому місту, біля метро</div></div>
+      <div class="adv"><div class="adv-icon">✅</div><div class="adv-title">Безкоштовне скасування</div><div class="adv-text">До 2 годин до початку</div></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="logo">Cowork<span>Flow</span></div>
+    <div class="footer-links"><a>Про нас</a><a onclick="go('p-catalog')">Коворкінги</a><a>Для партнерів</a><a>Умови</a><a>Контакти</a></div>
+    <span>© 2026 CoworkFlow</span>
+  </footer>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE 2 — CATALOG
+════════════════════════════════════════ -->
+<div class="page" id="p-catalog">
+  <header>
+    <div class="logo" onclick="go('p-home')">Cowork<span>Flow</span></div>
+    <nav>
+      <a onclick="go('p-home')">Головна</a>
+      <a class="active">Каталог</a>
+      <div id="hdr-auth-catalog"></div>
+    </nav>
+  </header>
+
+  <div class="search-bar-compact">
+    <input type="text" class="sbc-input" id="cat-search" placeholder="🔍  Назва, район, метро..." />
+    <select class="sbc-select" id="cat-date-sel">
+      <option value="">📅 Будь-яка дата</option>
+      <option value="2026-05-16">16 травня</option>
+      <option value="2026-05-17">17 травня</option>
+      <option value="2026-05-20">20 травня</option>
+    </select>
+    <select class="sbc-select" id="cat-time-sel">
+      <option value="">🕐 Будь-який час</option>
+      <option>09:00</option><option>10:00</option><option>11:00</option><option>12:00</option>
+    </select>
+    <select class="sbc-select" id="cat-dur-sel">
+      <option value="">⏱ Тривалість</option>
+      <option>1 година</option><option>2 години</option><option>4 години</option><option>8 годин</option>
+    </select>
+    <button class="btn btn-primary" onclick="renderCatalog()">🔍 Пошук</button>
+  </div>
+
+  <div class="catalog-layout" style="flex:1;">
+    <div class="filters">
+      <div class="filter-title">Фільтри</div>
+
+      <div class="filter-section">
+        <div class="fs-title">Ціна (₴/год)</div>
+        <div class="price-range-inputs">
+          <input type="number" id="f-price-min" value="0" min="0" max="500" placeholder="Від" onchange="renderCatalog()" />
+          <span>—</span>
+          <input type="number" id="f-price-max" value="500" min="0" max="500" placeholder="До" onchange="renderCatalog()" />
+        </div>
+      </div>
+
+      <div class="filter-section">
+        <div class="fs-title">Зручності</div>
+        <div class="cb-item" data-filter="wifi"><div class="cb">✓</div>Wi-Fi</div>
+        <div class="cb-item" data-filter="coffee"><div class="cb">✓</div>Кава / Чай</div>
+        <div class="cb-item" data-filter="meeting"><div class="cb on">✓</div>Переговорна кімната</div>
+        <div class="cb-item" data-filter="parking"><div class="cb">✓</div>Паркування</div>
+        <div class="cb-item" data-filter="printer"><div class="cb">✓</div>Принтер / Сканер</div>
+        <div class="cb-item" data-filter="lounge"><div class="cb">✓</div>Кімната відпочинку</div>
+        <div class="cb-item" data-filter="kitchen"><div class="cb">✓</div>Кухня</div>
+      </div>
+
+      <div class="filter-section">
+        <div class="fs-title">Мінімальний рейтинг</div>
+        <div class="cb-item" data-rfilter="4.5"><div class="cb on">✓</div><span class="stars">★★★★★</span><span style="font-size:11px;color:var(--g500);margin-left:4px">(4.5+)</span></div>
+        <div class="cb-item" data-rfilter="4.0"><div class="cb on">✓</div><span class="stars">★★★★</span><span style="font-size:11px;color:var(--g500);margin-left:4px">(4.0+)</span></div>
+        <div class="cb-item" data-rfilter="3.0"><div class="cb">✓</div><span class="stars">★★★</span><span style="font-size:11px;color:var(--g500);margin-left:4px">(3.0+)</span></div>
+      </div>
+
+      <div class="filter-section">
+        <div class="fs-title">Статус</div>
+        <div class="cb-item" data-sfilter="free"><div class="cb on">✓</div>Є вільні місця</div>
+        <div class="cb-item" data-sfilter="few"><div class="cb on">✓</div>Мало місць (⚡)</div>
+        <div class="cb-item" data-sfilter="busy"><div class="cb">✓</div>Зайнято</div>
+      </div>
+
+      <button class="btn btn-outline" style="width:100%;justify-content:center;height:40px;" onclick="resetFilters()">Скинути фільтри</button>
+    </div>
+
+    <div class="catalog-main">
+      <div class="toolbar">
+        <div class="results-count">Знайдено <span id="results-num">0</span> коворкінгів</div>
+        <div class="toolbar-right">
+          <select class="sort-select" id="sort-sel" onchange="renderCatalog()">
+            <option value="rating">За рейтингом ▾</option>
+            <option value="price-asc">За ціною ↑</option>
+            <option value="price-desc">За ціною ↓</option>
+          </select>
+          <div class="view-toggle">
+            <div class="vt on">☰ Списком</div>
+            <div class="vt">🗺 Карта</div>
+          </div>
+        </div>
+      </div>
+      <div id="catalog-list"></div>
+      <div class="pagination" id="pagination" style="display:none;">
+        <div class="pg on">1</div>
+        <div class="pg">2</div>
+        <div class="pg">3</div>
+        <div class="pg">→</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="logo">Cowork<span>Flow</span></div>
+    <div class="footer-links"><a onclick="go('p-home')">Головна</a><a>Умови</a><a>Контакти</a></div>
+    <span>© 2026 CoworkFlow</span>
+  </footer>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE 3 — DETAIL
+════════════════════════════════════════ -->
+<div class="page" id="p-detail">
+  <header>
+    <div class="logo" onclick="go('p-home')">Cowork<span>Flow</span></div>
+    <nav>
+      <a onclick="go('p-home')">Головна</a>
+      <a onclick="go('p-catalog')">Каталог</a>
+      <div id="hdr-auth-detail"></div>
+    </nav>
+  </header>
+  <div class="breadcrumb">
+    <a onclick="go('p-home')">Головна</a><span>›</span>
+    <a onclick="go('p-catalog')">Каталог</a><span>›</span>
+    <span class="current" id="detail-bc">WorkHub</span>
+  </div>
+
+  <div class="detail-layout">
+    <div class="detail-main">
+      <div class="gallery">
+        <div class="gal-main" id="detail-gal-main" style="background:linear-gradient(135deg,#667eea,#764ba2)">Головне фото</div>
+        <div class="gal-sm" style="background:linear-gradient(135deg,#f093fb,#f5576c)">Зал 2</div>
+        <div class="gal-sm" style="background:linear-gradient(135deg,#4facfe,#00f2fe)">Переговорна</div>
+      </div>
+
+      <div class="detail-title-row">
+        <div>
+          <div class="detail-title" id="detail-title">WorkHub</div>
+          <div class="detail-addr" id="detail-addr">📍 вул. Соборності, 15, Київ</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <button class="fav-btn" onclick="toggleFav()">♡</button>
+          <div class="rating-big"><div class="num" id="detail-rating">★ 4.8</div><div class="cnt" id="detail-review-cnt">47 відгуків</div></div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab on">Про коворкінг</div>
+        <div class="tab">Зручності</div>
+        <div class="tab">Відгуки</div>
+        <div class="tab">Як дістатись</div>
+      </div>
+
+      <p id="detail-desc" style="font-size:13px;color:var(--g700);line-height:1.8;margin-bottom:24px"></p>
+
+      <div style="font-size:15px;font-weight:900;color:var(--navy);margin-bottom:14px">Зручності</div>
+      <div class="amenities-grid" id="detail-amenities"></div>
+
+      <div style="font-size:15px;font-weight:900;color:var(--navy);margin-bottom:14px">Зайнятість на тиждень</div>
+      <div class="cal-box">
+        <div class="cal-nav"><span style="cursor:pointer">← Трав 2026</span><span style="cursor:pointer">Черв 2026 →</span></div>
+        <div class="cal-grid">
+          <div class="cal-hd">Пн</div><div class="cal-hd">Вт</div><div class="cal-hd">Ср</div><div class="cal-hd">Чт</div><div class="cal-hd">Пт</div><div class="cal-hd">Сб</div><div class="cal-hd">Нд</div>
+          <div class="cal-d cal-free" onclick="pickDate(this)">12</div>
+          <div class="cal-d cal-free" onclick="pickDate(this)">13</div>
+          <div class="cal-d cal-free" onclick="pickDate(this)">14</div>
+          <div class="cal-d cal-free" onclick="pickDate(this)">15</div>
+          <div class="cal-d cal-today">16</div>
+          <div class="cal-d cal-busy">17</div>
+          <div class="cal-d cal-we">18</div>
+          <div class="cal-d cal-busy">19</div>
+          <div class="cal-d cal-free" onclick="pickDate(this)">20</div>
+          <div class="cal-d cal-free" onclick="pickDate(this)">21</div>
+          <div class="cal-d cal-free" onclick="pickDate(this)">22</div>
+          <div class="cal-d cal-free" onclick="pickDate(this)">23</div>
+          <div class="cal-d cal-free" onclick="pickDate(this)">24</div>
+          <div class="cal-d cal-we">25</div>
+        </div>
+        <div class="cal-legend">
+          <span><i style="background:var(--green-l)"></i>Вільно</span>
+          <span><i style="background:var(--red-l)"></i>Зайнято</span>
+          <span><i style="background:var(--navy)"></i>Сьогодні</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-sidebar">
+      <div class="price-card">
+        <div class="pc-from">Від</div>
+        <div class="pc-price" id="detail-price-big">55 ₴ <small>/ год</small></div>
+        <div class="price-table">
+          <div class="pt-head"><span>Тариф</span><span>Ціна</span></div>
+          <div class="pt-row"><span>1 година</span><span id="pt-1h" style="font-weight:800;color:var(--navy)">55 ₴</span></div>
+          <div class="pt-row highlight"><span>4 години 🔥</span><span id="pt-4h" class="price" style="font-weight:800;color:var(--orange)">200 ₴</span></div>
+          <div class="pt-row"><span>1 день (8 год)</span><span id="pt-8h" style="font-weight:800;color:var(--navy)">380 ₴</span></div>
+        </div>
+        <div class="pc-field">
+          <span class="lbl">Дата</span>
+          <select class="pc-select" id="pc-date"><option>📅 16 травня 2026</option><option>📅 17 травня 2026</option><option>📅 20 травня 2026</option></select>
+        </div>
+        <div class="pc-row2">
+          <div>
+            <span class="lbl">Час початку</span>
+            <select class="pc-select" id="pc-time"><option>🕐 09:00</option><option selected>🕐 10:00</option><option>🕐 11:00</option><option>🕐 12:00</option></select>
+          </div>
+          <div>
+            <span class="lbl">Тривалість</span>
+            <select class="pc-select" id="pc-dur" onchange="updateTotal()"><option value="1">⏱ 1 год</option><option value="2">⏱ 2 год</option><option value="3">⏱ 3 год</option><option value="4" selected>⏱ 4 год</option></select>
+          </div>
+        </div>
+        <div class="total-box">
+          <div class="total-line"><span style="color:var(--g500)" id="total-base-label">55 ₴ × 4 год</span><span id="total-base">220 ₴</span></div>
+          <div class="total-line"><span style="color:var(--green)">Знижка (тариф 4 год)</span><span style="color:var(--green)" id="total-disc">−20 ₴</span></div>
+          <div class="total-line sum"><span>Разом:</span><span id="total-final">200 ₴</span></div>
+        </div>
+        <button class="btn btn-primary btn-full btn-lg" onclick="goBooking()">🗓 Забронювати</button>
+        <div class="free-cancel">✓ Безкоштовне скасування до 2 год</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="logo">Cowork<span>Flow</span></div>
+    <div class="footer-links"><a onclick="go('p-home')">Головна</a><a onclick="go('p-catalog')">Каталог</a><a>Умови</a><a>Контакти</a></div>
+    <span>© 2026 CoworkFlow</span>
+  </footer>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE 4 — BOOKING FORM
+════════════════════════════════════════ -->
+<div class="page" id="p-booking">
+  <header>
+    <div class="logo" onclick="go('p-home')">Cowork<span>Flow</span></div>
+    <nav><a onclick="go('p-catalog')">Каталог</a><div id="hdr-auth-booking"></div></nav>
+  </header>
+  <div class="breadcrumb">
+    <a onclick="go('p-home')">Головна</a><span>›</span>
+    <a onclick="go('p-catalog')">Каталог</a><span>›</span>
+    <a onclick="go('p-detail')">WorkHub</a><span>›</span>
+    <span class="current">Бронювання</span>
+  </div>
+  <div class="progress-bar">
+    <div class="ps done"><div class="ps-circle">✓</div>Оберіть час</div>
+    <div class="ps-line done"></div>
+    <div class="ps active"><div class="ps-circle">2</div>Ваші дані</div>
+    <div class="ps-line pending"></div>
+    <div class="ps pending"><div class="ps-circle">3</div>Підтвердження</div>
+  </div>
+
+  <div class="booking-layout">
+    <div class="booking-form">
+      <div class="booking-section-title">Ваші контактні дані</div>
+      <div class="booking-section-sub">Введіть дані для підтвердження бронювання</div>
+      <div class="form-group">
+        <label class="lbl">Ім'я та прізвище *</label>
+        <div class="input-icon"><span class="ico">👤</span><input type="text" id="f-name" placeholder="Ваше ім'я" /></div>
+        <div class="err-msg" id="f-name-err">Введіть ім'я</div>
+      </div>
+      <div class="form-2col">
+        <div class="form-group">
+          <label class="lbl">Телефон *</label>
+          <div class="input-icon"><span class="ico">📞</span><input type="tel" id="f-phone" placeholder="+380 97 ..." /></div>
+          <div class="err-msg" id="f-phone-err">Введіть телефон</div>
+        </div>
+        <div class="form-group">
+          <label class="lbl">Email *</label>
+          <div class="input-icon"><span class="ico">📧</span><input type="email" id="f-email" placeholder="your@email.com" /></div>
+          <div class="err-msg" id="f-email-err">Введіть email</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="lbl">Нотатки</label>
+        <textarea placeholder="Побажання (необов'язково)..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="lbl">Промокод</label>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="promo" placeholder="Введіть промокод..." style="flex:1" />
+          <button class="btn btn-outline" style="height:46px;padding:0 20px;white-space:nowrap" onclick="applyPromo()">Застосувати</button>
+        </div>
+      </div>
+      <div class="agreement-box">
+        <div class="agr-cb" id="agr-cb">✓</div>
+        <p>Я погоджуюсь з <a>Правилами коворкінгу</a> та <a>Умовами сервісу</a>. Скасування можливе до 2 годин до початку.</p>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-outline btn-lg" onclick="go('p-detail')" style="padding:0 24px">← Назад</button>
+        <button class="btn btn-primary btn-lg" style="flex:1" onclick="submitBooking()">Підтвердити бронювання →</button>
+      </div>
+    </div>
+
+    <div class="booking-sidebar">
+      <div class="bs-card">
+        <div class="bs-head"><div class="sub">Деталі бронювання</div><div class="name" id="bs-name">WorkHub</div></div>
+        <div class="bs-img" id="bs-img" style="background:linear-gradient(135deg,#667eea,#764ba2)">Фото</div>
+        <div class="bs-rows">
+          <div class="bs-row"><span class="k">📍 Адреса</span><span class="v" id="bs-addr">вул. Соборності, 15</span></div>
+          <div class="bs-row"><span class="k">📅 Дата</span><span class="v">16.05.2026</span></div>
+          <div class="bs-row"><span class="k">🕐 Час</span><span class="v">10:00 – 14:00</span></div>
+          <div class="bs-row"><span class="k">⏱ Тривалість</span><span class="v">4 години</span></div>
+          <div style="height:1px;background:var(--g200);margin:8px 0"></div>
+          <div class="bs-row"><span class="k">Тариф 4 год</span><span id="bs-price">200 ₴</span></div>
+          <div class="bs-row"><span style="color:var(--green)">Знижка</span><span style="color:var(--green)" id="bs-disc">−20 ₴</span></div>
+          <div class="bs-total"><span>Разом:</span><span class="v" id="bs-total">200 ₴</span></div>
+        </div>
+      </div>
+      <div class="free-cancel-box">✓ Безкоштовне скасування до 16.05.2026 08:00</div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="logo">Cowork<span>Flow</span></div>
+    <div class="footer-links"><a onclick="go('p-home')">Головна</a><a onclick="go('p-catalog')">Каталог</a><a>Умови</a></div>
+    <span>© 2026 CoworkFlow</span>
+  </footer>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE 5 — CONFIRMATION
+════════════════════════════════════════ -->
+<div class="page" id="p-confirm">
+  <header>
+    <div class="logo" onclick="go('p-home')">Cowork<span>Flow</span></div>
+    <nav><a onclick="go('p-catalog')">Каталог</a><div id="hdr-auth-confirm"></div></nav>
+  </header>
+  <div class="progress-bar">
+    <div class="ps done"><div class="ps-circle">✓</div>Оберіть час</div>
+    <div class="ps-line done"></div>
+    <div class="ps done"><div class="ps-circle">✓</div>Ваші дані</div>
+    <div class="ps-line done"></div>
+    <div class="ps done"><div class="ps-circle">✓</div>Підтвердження</div>
+  </div>
+
+  <div class="confirm-layout">
+    <div class="confirm-center">
+      <div class="success-icon" style="position:relative">✓
+        <span style="position:absolute;top:-20px;left:-30px;font-size:24px">🎉</span>
+        <span style="position:absolute;top:-10px;right:-25px;font-size:18px">✨</span>
+      </div>
+      <div class="confirm-title">Бронювання успішне!</div>
+      <p class="confirm-sub">Підтвердження надіслано на <strong style="color:var(--navy)" id="conf-email">—</strong></p>
+      <div class="booking-num">
+        <span class="k">Номер бронювання</span>
+        <span class="v" id="conf-num">BK-00000</span>
+      </div>
+      <div class="confirm-card">
+        <div class="cc-head">
+          <div><div class="n" id="conf-place">WorkHub</div><div class="a" id="conf-place-addr">📍 вул. Соборності, 15, Київ</div></div>
+          <div class="cc-rating" id="conf-rating">★ 4.8</div>
+        </div>
+        <div class="cc-rows">
+          <div class="cc-row"><span class="k">📅 Дата</span><span class="v">П'ятниця, 16 травня 2026</span></div>
+          <div class="cc-row"><span class="k">🕐 Час</span><span class="v">10:00 – 14:00 (4 год)</span></div>
+          <div class="cc-row"><span class="k">👤 Орендар</span><span class="v" id="conf-name">—</span></div>
+          <div class="cc-row"><span class="k">💳 Оплата</span><span class="chip-green">● Підтверджено</span></div>
+          <div class="cc-total"><span>Вартість:</span><span class="v" id="conf-total">200 ₴</span></div>
+        </div>
+      </div>
+      <div class="confirm-actions">
+        <button class="btn btn-primary btn-full btn-lg" onclick="go('p-home')">🏠 На головну</button>
+        <button class="btn btn-outline btn-full" style="height:48px;font-size:14px;border-radius:10px" onclick="toast('📅 Подію додано до Google Calendar!')">📅 Google Calendar</button>
+        <button class="btn" style="color:var(--navy);font-size:13px;font-weight:700;text-decoration:underline;height:40px;background:transparent" onclick="go('p-catalog')">+ Забронювати ще один коворкінг</button>
+      </div>
+    </div>
+    <div class="confirm-sidebar">
+      <div class="next-steps">
+        <div class="ns-title">Що далі?</div>
+        <div class="ns-item"><div class="ns-num">1</div><div class="ns-text">Отримайте лист-підтвердження з деталями бронювання</div></div>
+        <div class="ns-item"><div class="ns-num">2</div><div class="ns-text">Прийдіть за 5 хв до початку та назвіть номер бронювання</div></div>
+        <div class="ns-item"><div class="ns-num">3</div><div class="ns-text">Після візиту залиште відгук — це допомагає іншим!</div></div>
+      </div>
+      <div class="mini-map">
+        <div class="mini-map-grid"></div>
+        <div class="mini-map-pin"><div class="emoji">📍</div><div class="txt" id="conf-map-label">WorkHub на карті</div></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="logo">Cowork<span>Flow</span></div>
+    <div class="footer-links"><a onclick="go('p-home')">Головна</a><a onclick="go('p-catalog')">Каталог</a><a>Умови</a></div>
+    <span>© 2026 CoworkFlow</span>
+  </footer>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE 6 — CABINET
+════════════════════════════════════════ -->
+<div class="page" id="p-cabinet">
+  <header>
+    <div class="logo" onclick="go('p-home')">Cowork<span>Flow</span></div>
+    <nav>
+      <a onclick="go('p-home')">Головна</a>
+      <a onclick="go('p-catalog')">Каталог</a>
+      <div id="hdr-auth-cabinet"></div>
+    </nav>
+  </header>
+
+  <div class="cabinet-layout">
+    <div class="cabinet-sidebar">
+      <div class="cab-user-info">
+        <div class="cab-avatar" id="cab-avatar">МІ</div>
+        <div class="cab-name" id="cab-name">Мікола Іванов</div>
+        <div class="cab-email" id="cab-email">mikola@email.com</div>
+      </div>
+      <div class="cab-nav-item active" onclick="cabSection('bookings', this)"><span class="ico">📋</span>Мої бронювання</div>
+      <div class="cab-nav-item" onclick="cabSection('favs', this)"><span class="ico">♡</span>Обрані</div>
+      <div class="cab-nav-item" onclick="cabSection('profile', this)"><span class="ico">👤</span>Профіль</div>
+      <div class="cab-nav-item" onclick="cabSection('stats', this)"><span class="ico">📊</span>Статистика</div>
+      <div class="cab-nav-item danger" style="color:var(--red);margin-top:auto" onclick="doLogout()"><span class="ico">🚪</span>Вийти</div>
+    </div>
+
+    <div class="cabinet-main">
+      <!-- Bookings -->
+      <div class="cab-section active" id="cab-bookings">
+        <div class="cab-title">Мої бронювання</div>
+        <div id="booking-history-list"></div>
+      </div>
+      <!-- Favs -->
+      <div class="cab-section" id="cab-favs">
+        <div class="cab-title">Обрані коворкінги</div>
+        <div id="favs-list"></div>
+      </div>
+      <!-- Profile -->
+      <div class="cab-section" id="cab-profile">
+        <div class="cab-title">Редагувати профіль</div>
+        <div class="profile-form">
+          <div class="form-2col">
+            <div class="form-group"><label class="lbl">Ім'я</label><input type="text" id="prof-fname" /></div>
+            <div class="form-group"><label class="lbl">Прізвище</label><input type="text" id="prof-lname" /></div>
+          </div>
+          <div class="form-group"><label class="lbl">Email</label><input type="email" id="prof-email" /></div>
+          <div class="form-group"><label class="lbl">Телефон</label><input type="tel" id="prof-phone" placeholder="+380" /></div>
+          <div class="form-group"><label class="lbl">Новий пароль</label><input type="password" placeholder="Залиште порожнім, щоб не змінювати" /></div>
+          <button class="btn btn-primary" style="height:44px;padding:0 24px;" onclick="saveProfile()">Зберегти зміни</button>
+        </div>
+      </div>
+      <!-- Stats -->
+      <div class="cab-section" id="cab-stats">
+        <div class="cab-title">Моя статистика</div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="num" id="stat-bookings">0</div><div class="label">Бронювань</div></div>
+          <div class="stat-card"><div class="num" id="stat-hours">0 год</div><div class="label">Проведено в коворкінгу</div></div>
+          <div class="stat-card"><div class="num" id="stat-spent">0 ₴</div><div class="label">Витрачено</div></div>
+        </div>
+        <div style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:24px;">
+          <div style="font-size:14px;font-weight:900;color:var(--navy);margin-bottom:14px">Улюблені коворкінги</div>
+          <div id="stat-fav-list" style="color:var(--g500);font-size:13px">Ще немає бронювань</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="logo">Cowork<span>Flow</span></div>
+    <div class="footer-links"><a onclick="go('p-home')">Головна</a><a onclick="go('p-catalog')">Каталог</a><a>Умови</a></div>
+    <span>© 2026 CoworkFlow</span>
+  </footer>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════
+// DATA — COWORKINGS DATABASE
+// ════════════════════════════════════════
+const COWORKINGS = [
+  {
+    id: 1, name: 'WorkHub', shortAddr: 'вул. Соборності, 15',
+    addr: '📍 вул. Соборності, 15, Київ · 5 хв від метро Хрещатик',
+    metro: 'Хрещатик', rating: 4.8, reviews: 47,
+    price: 55, price4h: 200, price8h: 380,
+    status: 'free', // free | few | busy
+    gradient: 'linear-gradient(135deg,#667eea,#764ba2)',
+    tags: ['wifi','coffee','printer','meeting'],
+    badges: ['Wi-Fi 200 Мбіт','☕ Кава','🖨 Принтер','🏢 Переговорна'],
+    desc: 'WorkHub — сучасний коворкінг у центрі міста для IT-спеціалістів, фрилансерів та малого бізнесу. Швидкий Wi-Fi 200 Мбіт/с, ергономічні крісла, розетки та USB-порти біля кожного столу, безкоштовна кава та чай. Відкриті 7 днів на тиждень з 8:00 до 22:00.',
+    amenities: [
+      {icon:'📶',label:'Wi-Fi\n200 Мбіт'},{icon:'☕',label:'Кава\nбезкоштовно'},
+      {icon:'🖨',label:'Принтер\nі сканер'},{icon:'🏢',label:'Переговорна\nкімната'},
+      {icon:'🔌',label:'Розетки\nу кожного'},{icon:'🧴',label:'Санвузол\nта душ'}
+    ]
+  },
+  {
+    id: 2, name: 'Creative Loft', shortAddr: 'вул. В. Васильківська, 72',
+    addr: '📍 вул. Велика Васильківська, 72, Київ · 8 хв від метро',
+    metro: 'Пл. Льва Толстого', rating: 4.9, reviews: 102,
+    price: 80, price4h: 290, price8h: 540,
+    status: 'free',
+    gradient: 'linear-gradient(135deg,#f093fb,#f5576c)',
+    tags: ['wifi','parking','kitchen','lounge'],
+    badges: ['Wi-Fi 500 Мбіт','🅿️ Парковка','☕ Кухня','🎮 Відпочинок'],
+    desc: 'Creative Loft — простір для творчих людей та стартапів. Просторий лофт з великими вікнами, природним освітленням, власною кухнею з безкоштовними снеками та кімнатою відпочинку. Паркомісце включено.',
+    amenities: [
+      {icon:'📶',label:'Wi-Fi\n500 Мбіт'},{icon:'🅿️',label:'Парковка\nбезкоштовно'},
+      {icon:'☕',label:'Кухня\nта снеки'},{icon:'🎮',label:'Кімната\nвідпочинку'},
+      {icon:'🔌',label:'Розетки\nу кожного'},{icon:'🪴',label:'Жива\nприрода'}
+    ]
+  },
+  {
+    id: 3, name: 'Business Point', shortAddr: 'вул. Прорізна, 3',
+    addr: '📍 вул. Прорізна, 3, Київ · 2 хв від метро',
+    metro: 'Хрещатик', rating: 4.6, reviews: 58,
+    price: 65, price4h: 230, price8h: 430,
+    status: 'few',
+    gradient: 'linear-gradient(135deg,#43e97b,#38f9d7)',
+    tags: ['wifi','printer','lounge'],
+    badges: ['Wi-Fi 1 Гбіт','🖨 Принтер','🎮 Відпочинок'],
+    desc: 'Business Point — діловий коворкінг прямо в центрі, 2 хвилини від метро. Ідеально для ділових зустрічей, переговорів та продуктивної роботи. Найшвидший Wi-Fi у місті — 1 Гбіт/с.',
+    amenities: [
+      {icon:'📶',label:'Wi-Fi\n1 Гбіт'},{icon:'🖨',label:'Принтер\nі сканер'},
+      {icon:'🎮',label:'Кімната\nвідпочинку'},{icon:'🏢',label:'2 переговорні\nкімнати'},
+      {icon:'🔌',label:'Розетки\nу кожного'},{icon:'📺',label:'Великий\nекран'}
+    ]
+  },
+  {
+    id: 4, name: 'OpenDesk', shortAddr: 'вул. Саксаганського, 88',
+    addr: '📍 вул. Саксаганського, 88, Київ · 12 хв від метро',
+    metro: 'Університет', rating: 4.3, reviews: 29,
+    price: 40, price4h: 140, price8h: 260,
+    status: 'busy',
+    gradient: 'linear-gradient(135deg,#fa709a,#fee140)',
+    tags: ['wifi','coffee'],
+    badges: ['Wi-Fi 100 Мбіт','☕ Кава'],
+    desc: 'OpenDesk — бюджетний коворкінг для студентів та фрилансерів. Затишна атмосфера, стабільний Wi-Fi та безкоштовна кава. Відкриті з 9:00 до 20:00.',
+    amenities: [
+      {icon:'📶',label:'Wi-Fi\n100 Мбіт'},{icon:'☕',label:'Кава\nта чай'},
+      {icon:'🔌',label:'Розетки'},{icon:'🪑',label:'Ергономічні\nкрісла'},
+      {icon:'📚',label:'Тихий\nзал'},{icon:'🌿',label:'Затишна\nатмосфера'}
+    ]
+  },
+  {
+    id: 5, name: 'SmartSpace', shortAddr: 'вул. Хрещатик, 10',
+    addr: '📍 вул. Хрещатик, 10, Київ · 3 хв від метро',
+    metro: 'Хрещатик', rating: 4.2, reviews: 31,
+    price: 45, price4h: 160, price8h: 300,
+    status: 'free',
+    gradient: 'linear-gradient(135deg,#4facfe,#00f2fe)',
+    tags: ['wifi','parking','meeting'],
+    badges: ['Wi-Fi 500 Мбіт','🅿️ Парковка','🏢 Переговорна'],
+    desc: 'SmartSpace — сучасний коворкінг на головній вулиці міста. Зручне розташування, паркомісця та окремі кабінки для відеодзвінків.',
+    amenities: [
+      {icon:'📶',label:'Wi-Fi\n500 Мбіт'},{icon:'🅿️',label:'Парковка'},
+      {icon:'🏢',label:'Переговорна'},{icon:'📞',label:'Кабінки\nдля дзвінків'},
+      {icon:'🔌',label:'Розетки'},{icon:'☕',label:'Кава-машина'}
+    ]
+  },
+  {
+    id: 6, name: 'HubPro', shortAddr: 'просп. Перемоги, 44',
+    addr: '📍 просп. Перемоги, 44, Київ · 6 хв від метро',
+    metro: 'Шулявська', rating: 4.7, reviews: 73,
+    price: 70, price4h: 250, price8h: 470,
+    status: 'free',
+    gradient: 'linear-gradient(135deg,#a18cd1,#fbc2eb)',
+    tags: ['wifi','coffee','meeting','printer','kitchen'],
+    badges: ['Wi-Fi 300 Мбіт','☕ Кухня','🏢 Переговорна','🖨 Принтер'],
+    desc: 'HubPro — преміум коворкінг з повним сервісом: власна кухня, переговорні кімнати, принтери та сканери, постійна підтримка персоналу. Ідеально для корпоративних клієнтів.',
+    amenities: [
+      {icon:'📶',label:'Wi-Fi\n300 Мбіт'},{icon:'☕',label:'Кухня\nта снеки'},
+      {icon:'🏢',label:'3 переговорні'},{icon:'🖨',label:'Принтер\nі сканер'},
+      {icon:'🔌',label:'Розетки'},{icon:'👨‍💼',label:'Персонал\n24/7'}
+    ]
+  }
+];
+
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+let currentUser = null;
+let bookings = [];
+let favorites = new Set();
+let currentCowork = null;
+let promoApplied = false;
+
+// ════════════════════════════════════════
+// AUTH SYSTEM
+// ════════════════════════════════════════
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+function switchModal(from, to) {
+  closeModal(from);
+  setTimeout(() => openModal(to), 200);
+}
+
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if(e.target === o) o.classList.remove('open'); });
+});
+
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  let ok = true;
+  document.getElementById('login-email').classList.remove('field-error');
+  document.getElementById('login-pass').classList.remove('field-error');
+  document.getElementById('login-email-err').classList.remove('show');
+  document.getElementById('login-pass-err').classList.remove('show');
+
+  if (!email || !email.includes('@')) {
+    document.getElementById('login-email').classList.add('field-error');
+    document.getElementById('login-email-err').classList.add('show');
+    ok = false;
+  }
+  if (!pass || pass.length < 3) {
+    document.getElementById('login-pass').classList.add('field-error');
+    document.getElementById('login-pass-err').classList.add('show');
+    ok = false;
+  }
+  if (!ok) return;
+
+  // Simulate login — accept any valid email/pass
+  const parts = email.split('@')[0].split('.');
+  const fname = capitalize(parts[0]);
+  const lname = parts[1] ? capitalize(parts[1]) : '';
+  loginUser({ fname, lname, email });
+  closeModal('modal-login');
+  toast('👋 Привіт, ' + fname + '!');
+}
+
+function doRegister() {
+  const fname = document.getElementById('reg-fname').value.trim();
+  const lname = document.getElementById('reg-lname').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  let ok = true;
+  ['reg-fname','reg-lname','reg-email','reg-pass'].forEach(id => {
+    document.getElementById(id).classList.remove('field-error');
+  });
+  ['reg-fname-err','reg-lname-err','reg-email-err','reg-pass-err'].forEach(id => {
+    document.getElementById(id).classList.remove('show');
+  });
+  if (!fname) { document.getElementById('reg-fname').classList.add('field-error'); document.getElementById('reg-fname-err').classList.add('show'); ok = false; }
+  if (!lname) { document.getElementById('reg-lname').classList.add('field-error'); document.getElementById('reg-lname-err').classList.add('show'); ok = false; }
+  if (!email || !email.includes('@')) { document.getElementById('reg-email').classList.add('field-error'); document.getElementById('reg-email-err').classList.add('show'); ok = false; }
+  if (!pass || pass.length < 6) { document.getElementById('reg-pass').classList.add('field-error'); document.getElementById('reg-pass-err').classList.add('show'); ok = false; }
+  if (!ok) return;
+
+  loginUser({ fname, lname, email });
+  closeModal('modal-register');
+  toast('🎉 Ласкаво просимо, ' + fname + '!');
+}
+
+function socialLogin(provider) {
+  loginUser({ fname: 'Олег', lname: 'Тест', email: 'oleg@' + provider.toLowerCase() + '.com' });
+  closeModal('modal-login');
+  closeModal('modal-register');
+  toast('✅ Вхід через ' + provider + ' успішний!');
+}
+
+function loginUser(user) {
+  currentUser = user;
+  renderHeaders();
+  // Pre-fill booking form
+  document.getElementById('f-name').value = user.fname + ' ' + user.lname;
+  document.getElementById('f-email').value = user.email;
+}
+
+function doLogout() {
+  currentUser = null;
+  renderHeaders();
+  go('p-home');
+  toast('👋 Ви вийшли з акаунту');
+}
+
+function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+
+function renderHeaders() {
+  const ids = ['hdr-auth-home','hdr-auth-catalog','hdr-auth-detail','hdr-auth-booking','hdr-auth-confirm','hdr-auth-cabinet'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (currentUser) {
+      const initials = currentUser.fname[0] + (currentUser.lname ? currentUser.lname[0] : '');
+      el.innerHTML = `
+        <div class="user-menu-wrap">
+          <div class="user-avatar" id="av-${id}" onclick="toggleUserMenu('dd-${id}')">${initials}</div>
+          <div class="user-dropdown" id="dd-${id}">
+            <div class="ud-head"><div class="ud-name">${currentUser.fname} ${currentUser.lname}</div><div class="ud-email">${currentUser.email}</div></div>
+            <div class="ud-item" onclick="go('p-cabinet');closeDD()">👤 Мій кабінет</div>
+            <div class="ud-item" onclick="cabSection('bookings',null);go('p-cabinet');closeDD()">📋 Бронювання</div>
+            <div class="ud-item" onclick="cabSection('favs',null);go('p-cabinet');closeDD()">♡ Обрані</div>
+            <div class="ud-item danger" onclick="doLogout()">🚪 Вийти</div>
+          </div>
+        </div>`;
+    } else {
+      el.innerHTML = `
+        <button class="btn btn-ghost" onclick="openModal('modal-login')">Увійти</button>
+        <button class="btn btn-primary" onclick="openModal('modal-register')">Реєстрація</button>`;
+    }
+  });
+  if (currentUser) updateCabinet();
+}
+
+function toggleUserMenu(ddId) {
+  document.querySelectorAll('.user-dropdown').forEach(d => {
+    if (d.id !== ddId) d.classList.remove('open');
+  });
+  document.getElementById(ddId)?.classList.toggle('open');
+}
+function closeDD() { document.querySelectorAll('.user-dropdown').forEach(d => d.classList.remove('open')); }
+document.addEventListener('click', e => {
+  if (!e.target.closest('.user-menu-wrap')) closeDD();
+});
+
+// ════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════
+function go(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById(id);
+  if (target) { target.classList.add('active'); window.scrollTo(0,0); }
+}
+
+// ════════════════════════════════════════
+// HOME SEARCH
+// ════════════════════════════════════════
+function doHomeSearch() {
+  const q = document.getElementById('s-loc').value.trim();
+  document.getElementById('cat-search').value = q;
+  go('p-catalog');
+  renderCatalog();
+}
+
+// ════════════════════════════════════════
+// CATALOG SEARCH & FILTER
+// ════════════════════════════════════════
+function getActiveFilters() {
+  const amenities = [];
+  document.querySelectorAll('[data-filter]').forEach(el => {
+    if (el.querySelector('.cb').classList.contains('on')) amenities.push(el.dataset.filter);
+  });
+  const ratingFilters = [];
+  document.querySelectorAll('[data-rfilter]').forEach(el => {
+    if (el.querySelector('.cb').classList.contains('on')) ratingFilters.push(parseFloat(el.dataset.rfilter));
+  });
+  const statusFilters = [];
+  document.querySelectorAll('[data-sfilter]').forEach(el => {
+    if (el.querySelector('.cb').classList.contains('on')) statusFilters.push(el.dataset.sfilter);
+  });
+  return { amenities, ratingFilters, statusFilters };
+}
+
+function renderCatalog() {
+  const q = (document.getElementById('cat-search')?.value || '').toLowerCase().trim();
+  const priceMin = parseInt(document.getElementById('f-price-min')?.value) || 0;
+  const priceMax = parseInt(document.getElementById('f-price-max')?.value) || 99999;
+  const sort = document.getElementById('sort-sel')?.value || 'rating';
+  const { amenities, ratingFilters, statusFilters } = getActiveFilters();
+  const minRating = ratingFilters.length ? Math.min(...ratingFilters) : 0;
+
+  let results = COWORKINGS.filter(c => {
+    // Text search
+    if (q) {
+      const hay = (c.name + c.addr + c.metro + c.badges.join('')).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    // Price
+    if (c.price < priceMin || c.price > priceMax) return false;
+    // Rating
+    if (minRating && c.rating < minRating) return false;
+    // Status
+    if (statusFilters.length && !statusFilters.includes(c.status)) return false;
+    // Amenities (all checked must match)
+    // If no amenity filter active → show all
+    return true;
+  });
+
+  // Sort
+  if (sort === 'rating') results.sort((a,b) => b.rating - a.rating);
+  else if (sort === 'price-asc') results.sort((a,b) => a.price - b.price);
+  else if (sort === 'price-desc') results.sort((a,b) => b.price - a.price);
+
+  document.getElementById('results-num').textContent = results.length;
+
+  const list = document.getElementById('catalog-list');
+  if (results.length === 0) {
+    list.innerHTML = '<div class="no-results">😕 Нічого не знайдено. Спробуйте змінити фільтри.</div>';
+    document.getElementById('pagination').style.display = 'none';
+    return;
+  }
+
+  list.innerHTML = results.map(c => {
+    const statusChip = c.status === 'free'
+      ? '<span class="chip-green">● Є місця</span>'
+      : c.status === 'few'
+        ? '<span class="chip-orange">⚡ Мало місць</span>'
+        : '<span class="chip-red">● Зайнято</span>';
+    const btn = c.status === 'busy'
+      ? `<button class="btn btn-outline" style="height:36px" onclick="openCowork(${c.id})">Переглянути</button>`
+      : `<button class="btn btn-primary" onclick="openCowork(${c.id})">Переглянути →</button>`;
+    const badgesHtml = c.badges.slice(0,4).map(b => `<span class="badge">${b}</span>`).join('');
+    return `
+      <div class="list-card" onclick="openCowork(${c.id})">
+        <div class="lc-img" style="background:${c.gradient}">${c.name}</div>
+        <div class="lc-body">
+          <div>
+            <div class="lc-top-row">
+              <div class="lc-name">${c.name}</div>
+              <div class="rating-chip">★ ${c.rating} <span style="font-size:10px;font-weight:400;color:var(--g500)">(${c.reviews})</span></div>
+            </div>
+            <div class="lc-addr">${c.addr}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">${badgesHtml}</div>
+          </div>
+          <div class="lc-bottom">
+            <div><div class="lc-price">${c.price} ₴ <small>/ год</small></div><div class="lc-price-note">або ${c.price4h} ₴ / 4 год</div></div>
+            <div class="lc-actions">${statusChip}${btn}</div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+  document.getElementById('pagination').style.display = results.length > 4 ? 'flex' : 'none';
+}
+
+function resetFilters() {
+  document.getElementById('f-price-min').value = 0;
+  document.getElementById('f-price-max').value = 500;
+  document.getElementById('cat-search').value = '';
+  document.querySelectorAll('.cb-item').forEach(el => {
+    el.querySelector('.cb').classList.add('on');
+    el.querySelector('.cb').textContent = '✓';
+  });
+  renderCatalog();
+}
+
+// ════════════════════════════════════════
+// DETAIL PAGE
+// ════════════════════════════════════════
+function openCowork(id) {
+  currentCowork = COWORKINGS.find(c => c.id === id);
+  if (!currentCowork) return;
+  const c = currentCowork;
+
+  document.getElementById('detail-bc').textContent = c.name;
+  document.getElementById('detail-gal-main').style.background = c.gradient;
+  document.getElementById('detail-gal-main').textContent = c.name;
+  document.getElementById('detail-title').textContent = c.name;
+  document.getElementById('detail-addr').textContent = c.addr;
+  document.getElementById('detail-rating').textContent = '★ ' + c.rating;
+  document.getElementById('detail-review-cnt').textContent = c.reviews + ' відгуків';
+  document.getElementById('detail-desc').textContent = c.desc;
+  document.getElementById('detail-price-big').innerHTML = `${c.price} ₴ <small>/ год</small>`;
+  document.getElementById('pt-1h').textContent = c.price + ' ₴';
+  document.getElementById('pt-4h').textContent = c.price4h + ' ₴';
+  document.getElementById('pt-8h').textContent = c.price8h + ' ₴';
+
+  // Amenities
+  document.getElementById('detail-amenities').innerHTML = c.amenities.map(a =>
+    `<div class="amenity"><div class="amenity-icon">${a.icon}</div><div class="amenity-label">${a.label.replace('\n','<br>')}</div></div>`
+  ).join('');
+
+  updateTotal();
+  go('p-detail');
+}
+
+function updateTotal() {
+  if (!currentCowork) return;
+  const c = currentCowork;
+  const durEl = document.getElementById('pc-dur');
+  const hrs = parseInt(durEl?.value || 4);
+  let base = c.price * hrs;
+  let disc = 0;
+  if (hrs >= 8) { disc = base - c.price8h; }
+  else if (hrs >= 4) { disc = base - c.price4h; }
+  const total = base - disc;
+  if (document.getElementById('total-base-label')) {
+    document.getElementById('total-base-label').textContent = `${c.price} ₴ × ${hrs} год`;
+    document.getElementById('total-base').textContent = base + ' ₴';
+    document.getElementById('total-disc').textContent = disc > 0 ? `−${disc} ₴` : '0 ₴';
+    document.getElementById('total-final').textContent = total + ' ₴';
+  }
+}
+
+function pickDate(el) {
+  document.querySelectorAll('.cal-d.cal-free').forEach(d => { d.style.outline='none'; d.style.background='var(--green-l)'; d.style.color='var(--green)'; });
+  el.style.background = 'var(--orange)';
+  el.style.color = '#fff';
+  el.style.outline = 'none';
+  toast('📅 Дата ' + el.textContent + ' травня обрана');
+}
+
+function toggleFav() {
+  if (!currentCowork) return;
+  if (!currentUser) { toast('⚠️ Увійдіть, щоб додавати до обраних'); openModal('modal-login'); return; }
+  const id = currentCowork.id;
+  if (favorites.has(id)) {
+    favorites.delete(id);
+    toast('✕ Видалено з обраних');
+  } else {
+    favorites.add(id);
+    toast('♡ Додано до обраних!');
+  }
+  updateCabinet();
+}
+
+function goBooking() {
+  if (!currentUser) {
+    toast('⚠️ Увійдіть або зареєструйтесь для бронювання');
+    openModal('modal-login');
+    return;
+  }
+  if (currentCowork) {
+    const hrs = parseInt(document.getElementById('pc-dur')?.value || 4);
+    let base = currentCowork.price * hrs;
+    let disc = hrs >= 8 ? base - currentCowork.price8h : hrs >= 4 ? base - currentCowork.price4h : 0;
+    document.getElementById('bs-name').textContent = currentCowork.name;
+    document.getElementById('bs-img').style.background = currentCowork.gradient;
+    document.getElementById('bs-addr').textContent = currentCowork.shortAddr;
+    document.getElementById('bs-price').textContent = (base-disc) + ' ₴';
+    document.getElementById('bs-disc').textContent = disc > 0 ? `−${disc} ₴` : '0 ₴';
+    document.getElementById('bs-total').textContent = (base-disc) + ' ₴';
+  }
+  go('p-booking');
+}
+
+// ════════════════════════════════════════
+// BOOKING FORM
+// ════════════════════════════════════════
+function applyPromo() {
+  const code = document.getElementById('promo').value.trim().toUpperCase();
+  if (code === 'COWORK10' || code === 'WELCOME' || code === 'SAVE20') {
+    toast('✅ Промокод застосовано! Знижка 10%');
+    promoApplied = true;
+  } else {
+    toast('❌ Промокод не знайдено або вже використано');
+  }
+}
+
+function submitBooking() {
+  const name = document.getElementById('f-name').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  let ok = true;
+
+  [['f-name','f-name-err',!name],['f-email','f-email-err',!email||!email.includes('@')],['f-phone','f-phone-err',!phone]].forEach(([fid,eid,fail]) => {
+    document.getElementById(fid).classList.toggle('field-error', fail);
+    document.getElementById(eid)?.classList.toggle('show', fail);
+    if (fail) ok = false;
+  });
+  if (!ok) { toast('⚠️ Заповніть усі обов\'язкові поля'); return; }
+
+  // Save booking
+  const bookingNum = 'BK-' + (10000 + Math.floor(Math.random() * 90000));
+  const total = currentCowork ? (currentCowork.price4h) : 200;
+  const booking = { id: bookingNum, name: currentCowork?.name || 'WorkHub', addr: currentCowork?.shortAddr || '—', date: '16.05.2026', time: '10:00 – 14:00', total, user: name };
+  bookings.unshift(booking);
+
+  // Confirmation page
+  document.getElementById('conf-name').textContent = name;
+  document.getElementById('conf-email').textContent = email;
+  document.getElementById('conf-num').textContent = bookingNum;
+  document.getElementById('conf-place').textContent = currentCowork?.name || 'WorkHub';
+  document.getElementById('conf-place-addr').textContent = currentCowork?.addr || '—';
+  document.getElementById('conf-rating').textContent = '★ ' + (currentCowork?.rating || 4.8);
+  document.getElementById('conf-total').textContent = total + ' ₴';
+  document.getElementById('conf-map-label').textContent = (currentCowork?.name || 'WorkHub') + ' на карті';
+
+  updateCabinet();
+  go('p-confirm');
+}
+
+// ════════════════════════════════════════
+// CABINET
+// ════════════════════════════════════════
+function cabSection(name, clickedEl) {
+  document.querySelectorAll('.cab-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.cab-nav-item').forEach(s => s.classList.remove('active'));
+  document.getElementById('cab-' + name)?.classList.add('active');
+  if (clickedEl) clickedEl.classList.add('active');
+}
+
+function updateCabinet() {
+  if (!currentUser) return;
+  // Avatar / name
+  const initials = currentUser.fname[0] + (currentUser.lname ? currentUser.lname[0] : '');
+  document.getElementById('cab-avatar').textContent = initials;
+  document.getElementById('cab-name').textContent = currentUser.fname + ' ' + currentUser.lname;
+  document.getElementById('cab-email').textContent = currentUser.email;
+
+  // Profile form
+  document.getElementById('prof-fname').value = currentUser.fname;
+  document.getElementById('prof-lname').value = currentUser.lname;
+  document.getElementById('prof-email').value = currentUser.email;
+
+  // Bookings history
+  const blist = document.getElementById('booking-history-list');
+  if (bookings.length === 0) {
+    blist.innerHTML = '<div style="color:var(--g400);font-size:13px;padding:20px 0">Ще немає бронювань. <a style="color:var(--orange);cursor:pointer;font-weight:700" onclick="go(\'p-catalog\')">Переглянути каталог →</a></div>';
+  } else {
+    blist.innerHTML = bookings.map(b => `
+      <div class="booking-history-card">
+        <div class="bhc-left">
+          <div class="place">${b.name}</div>
+          <div class="meta">📍 ${b.addr} · ${b.date} · ${b.time}</div>
+          <span class="chip-green" style="margin-top:6px;display:inline-block">● Підтверджено</span>
+        </div>
+        <div class="bhc-right">
+          <div class="bhc-price">${b.total} ₴</div>
+          <div style="font-size:11px;color:var(--g500);margin-top:3px">${b.id}</div>
+          <button class="btn btn-outline" style="height:32px;font-size:12px;margin-top:8px" onclick="toast('📄 Деталі бронювання ${b.id}')">Деталі</button>
+        </div>
+      </div>`).join('');
+  }
+
+  // Favs
+  const favList = document.getElementById('favs-list');
+  const favCoworks = COWORKINGS.filter(c => favorites.has(c.id));
+  if (favCoworks.length === 0) {
+    favList.innerHTML = '<div style="color:var(--g400);font-size:13px;padding:20px 0">Ще немає обраних. Натисніть ♡ на сторінці коворкінгу.</div>';
+  } else {
+    favList.innerHTML = favCoworks.map(c => `
+      <div class="booking-history-card">
+        <div class="bhc-left">
+          <div class="place">${c.name}</div>
+          <div class="meta">📍 ${c.shortAddr} · ★ ${c.rating} (${c.reviews} відгуків)</div>
+          <div style="margin-top:6px;font-size:13px;color:var(--navy);font-weight:700">${c.price} ₴/год</div>
+        </div>
+        <div class="bhc-right" style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-primary" style="height:36px;font-size:12px" onclick="openCowork(${c.id})">Переглянути</button>
+          <button class="btn btn-outline" style="height:36px;font-size:12px;color:var(--red);border-color:var(--red)" onclick="removeFav(${c.id})">✕</button>
+        </div>
+      </div>`).join('');
+  }
+
+  // Stats
+  const total = bookings.reduce((s,b) => s + b.total, 0);
+  const hours = bookings.length * 4;
+  document.getElementById('stat-bookings').textContent = bookings.length;
+  document.getElementById('stat-hours').textContent = hours + ' год';
+  document.getElementById('stat-spent').textContent = total + ' ₴';
+  const placeCounts = {};
+  bookings.forEach(b => { placeCounts[b.name] = (placeCounts[b.name]||0)+1; });
+  const topPlaces = Object.entries(placeCounts).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('stat-fav-list').innerHTML = topPlaces.length
+    ? topPlaces.map(([n,c]) => `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--g100);font-size:13px"><span>${n}</span><span style="font-weight:700;color:var(--navy)">${c} раз(ів)</span></div>`).join('')
+    : '<span style="color:var(--g400)">Ще немає бронювань</span>';
+}
+
+function removeFav(id) {
+  favorites.delete(id);
+  updateCabinet();
+  toast('✕ Видалено з обраних');
+}
+
+function saveProfile() {
+  if (!currentUser) return;
+  currentUser.fname = document.getElementById('prof-fname').value.trim() || currentUser.fname;
+  currentUser.lname = document.getElementById('prof-lname').value.trim() || currentUser.lname;
+  currentUser.email = document.getElementById('prof-email').value.trim() || currentUser.email;
+  renderHeaders();
+  updateCabinet();
+  toast('✅ Профіль збережено!');
+}
+
+// ════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.innerHTML = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+// ════════════════════════════════════════
+// INTERACTIVE CHECKBOXES (catalog filters)
+// ════════════════════════════════════════
+document.querySelectorAll('.cb-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const cb = item.querySelector('.cb');
+    cb.classList.toggle('on');
+    cb.textContent = cb.classList.contains('on') ? '✓' : '';
+    renderCatalog();
+  });
+});
+
+// Tab switching
+document.querySelectorAll('.tabs').forEach(tabs => {
+  tabs.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+      tab.classList.add('on');
+    });
+  });
+});
+
+// View toggle
+document.querySelectorAll('.view-toggle').forEach(vt => {
+  vt.querySelectorAll('.vt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      vt.querySelectorAll('.vt').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      if (btn.textContent.includes('Карта')) toast('🗺 Вигляд карти в розробці');
+    });
+  });
+});
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+(function init() {
+  // Set today's date
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = String(today.getMonth()+1).padStart(2,'0');
+  const d = String(today.getDate()).padStart(2,'0');
+  const dateEl = document.getElementById('s-date');
+  if (dateEl) dateEl.value = `${y}-${m}-${d}`;
+
+  // Render home cards (first 3)
+  const homeCards = document.getElementById('home-cards');
+  if (homeCards) {
+    homeCards.innerHTML = COWORKINGS.slice(0,3).map(c => {
+      const statusChip = c.status === 'free' ? '<span class="chip-green">● Вільно</span>' : c.status === 'few' ? '<span class="chip-orange">⚡ Мало місць</span>' : '<span class="chip-red">● Зайнято</span>';
+      const badgesHtml = c.badges.slice(0,3).map(b => `<span class="badge">${b}</span>`).join('');
+      return `
+        <div class="cowork-card" onclick="openCowork(${c.id})">
+          <div class="card-img" style="background:${c.gradient}">${c.name}</div>
+          <div class="card-body">
+            <div class="card-top"><div class="card-name">${c.name}</div>${statusChip}</div>
+            <div class="card-addr">${c.addr}</div>
+            <div class="card-badges">${badgesHtml}</div>
+            <div class="card-bottom">
+              <div><div class="card-price">${c.price} ₴ <small>/ год</small></div><div class="card-rating stars">★★★★★ <span style="color:var(--g500)">${c.rating} (${c.reviews})</span></div></div>
+              <button class="btn btn-primary" style="font-size:12px;padding:8px 16px;" onclick="event.stopPropagation();openCowork(${c.id})">Переглянути</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // Render catalog
+  renderCatalog();
+  renderHeaders();
+})();
+</script>
+</body>
+</html>
